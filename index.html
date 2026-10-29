@@ -1,276 +1,271 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MilRadio | Web PTT</title>
+  <meta name="theme-color" content="#fff6f4">
+  <meta name="description" content="PipVoice — a soft, simple push-to-talk voice app.">
+  <title>PipVoice | Push to Talk</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
   <style>
     :root {
-      --bg: #151815;
-      --panel: #202520;
-      --border: #343b34;
-      --text: #edf1eb;
-      --muted: #9ba69a;
-      --green: #9bd477;
-      --red: #ee7777;
+      --bg: #fff8f5;
+      --paper: #fffdfb;
+      --pink-50: #fff0f1;
+      --pink-100: #ffe1e5;
+      --pink-200: #ffc8d2;
+      --pink-400: #f18ba3;
+      --pink-500: #e87591;
+      --pink-700: #9f405b;
+      --ink: #493640;
+      --muted: #987f89;
+      --line: #f2dfe2;
+      --green: #5d9877;
+      --red: #c85e70;
+      --shadow: 0 22px 60px rgba(149, 87, 105, .12);
     }
 
     * { box-sizing: border-box; }
-
+    html { min-height: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 24px 16px;
+      padding: 28px 16px;
       display: grid;
       place-items: center;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, sans-serif;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 390px;
-      padding: 22px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: var(--panel);
-    }
-
-    .top, .status-row, .room-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .top { margin-bottom: 24px; }
-
-    .brand {
-      font-size: 17px;
-      font-weight: 700;
-    }
-
-    .sub, .muted {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #777;
-    }
-
-    .dot.online { background: var(--green); }
-    .dot.error { background: var(--red); }
-
-    .section {
-      margin-top: 18px;
-      padding: 16px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-
-    .label {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .room-code {
-      margin: 12px 0 6px;
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: 7px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255, 210, 220, .55), transparent 28rem),
+        radial-gradient(circle at 92% 90%, rgba(255, 231, 203, .55), transparent 25rem),
+        var(--bg);
+      font-family: 'DM Sans', sans-serif;
     }
 
     button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(232, 117, 145, .35); outline-offset: 3px; }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      padding: 24px;
+      border: 1px solid rgba(242, 223, 226, .9);
+      border-radius: 30px;
+      background: rgba(255, 253, 251, .94);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .app::before {
+      content: '';
+      position: absolute;
+      width: 145px;
+      height: 145px;
+      top: -86px;
+      right: -55px;
+      border-radius: 50%;
+      background: var(--pink-50);
+      pointer-events: none;
+    }
+
+    .top, .status, .room-row, .bottom, .brand-wrap { display: flex; align-items: center; }
+    .top { justify-content: space-between; gap: 12px; margin-bottom: 24px; position: relative; }
+    .brand-wrap { gap: 11px; }
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #ffe0e7, #fff0df);
+      box-shadow: inset 0 0 0 1px rgba(232, 117, 145, .12);
+      font-size: 22px;
+    }
+    .brand { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: -.7px; line-height: 1.05; }
+    .brand span { color: var(--pink-500); }
+    .sub { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .tagline { margin-top: 5px; }
+
+    .status {
+      gap: 7px;
+      flex-shrink: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff9f8;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #c5adb5; }
+    .dot.online { background: var(--green); box-shadow: 0 0 0 3px rgba(93, 152, 119, .12); }
+    .dot.error { background: var(--red); }
+
+    .section {
+      margin-top: 14px;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      background: var(--paper);
+    }
+    .section-head { display: flex; align-items: center; gap: 9px; }
+    .mini-icon {
+      width: 30px; height: 30px; display: grid; place-items: center;
+      border-radius: 11px; background: var(--pink-50); font-size: 15px;
+    }
+    .label { color: #896c78; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.25px; }
+    .room-row { justify-content: space-between; gap: 12px; margin-top: 13px; }
+    .room-code { margin: 0 0 4px; color: var(--pink-700); font-family: 'Nunito', sans-serif; font-size: 36px; font-weight: 900; letter-spacing: 7px; line-height: 1.1; }
 
     button {
       cursor: pointer;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 11px 13px;
-      background: #303830;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 11px 14px;
+      background: #fff8f7;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
     }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: .45;
-    }
-
-    .small-btn { padding: 9px 11px; }
+    button:not(:disabled):active { transform: scale(.97); }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    .small-btn { padding: 10px 13px; }
+    .connect-btn { border-color: var(--pink-500); background: var(--pink-500); color: white; box-shadow: 0 5px 12px rgba(232, 117, 145, .2); }
+    .connect-btn:not(:disabled):hover { background: #df6685; }
 
     input {
-      width: 100%;
-      min-width: 0;
-      padding: 12px;
-      color: var(--text);
-      background: #171b17;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      outline: none;
+      width: 100%; min-width: 0; padding: 13px 14px;
+      border: 1px solid var(--line); border-radius: 13px;
+      background: #fff9f7; color: var(--ink); outline: none; font-size: 13px;
     }
-
-    input:focus { border-color: var(--green); }
-
-    .room-row { margin-top: 12px; }
+    input::placeholder { color: #b9a3ac; }
+    input:focus { border-color: var(--pink-400); background: #fffdfb; }
     .room-row input { flex: 1; }
-
-    .connect-btn {
-      background: var(--green);
-      color: #182016;
-      border-color: var(--green);
-    }
+    .section-note { margin-top: 11px; }
 
     .ptt-section {
-      margin-top: 20px;
+      margin-top: 24px;
+      padding: 21px 14px 18px;
       text-align: center;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #fff5f5, #fffaf6);
+      border: 1px solid #f8e4e6;
     }
-
+    .ptt-title { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; }
+    .ptt-subtitle { margin-top: 3px; color: var(--muted); font-size: 11px; }
     .ptt {
-      width: 154px;
-      height: 154px;
-      margin: 20px auto 14px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      border: 5px solid #384138;
-      background: #293129;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.6;
-      touch-action: none;
-      user-select: none;
+      width: 164px; height: 164px; margin: 19px auto 13px;
+      display: grid; place-items: center; position: relative;
+      border-radius: 50%; border: 8px solid #ffe1e7;
+      background: linear-gradient(145deg, #f7a4b6, #e87591);
+      color: white; box-shadow: 0 12px 26px rgba(218, 102, 132, .24), inset 0 2px 2px rgba(255,255,255,.4);
+      touch-action: none; user-select: none; -webkit-user-select: none;
     }
+    .ptt::before { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; }
+    .ptt-inner { display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; z-index: 1; }
+    .mic-icon { font-size: 29px; line-height: 1; }
+    #pttText { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 900; line-height: 1.3; letter-spacing: .6px; }
+    .ptt:disabled { background: #e7dadd; border-color: #f2e7e9; box-shadow: none; color: #a9959c; opacity: 1; }
+    .ptt.ready { background: linear-gradient(145deg, #f7a4b6, #e87591); border-color: #ffe1e7; color: white; }
+    .ptt.transmitting { background: linear-gradient(145deg, #d45d7a, #b94264); border-color: #f5bdca; transform: scale(.97); box-shadow: 0 5px 15px rgba(185, 66, 100, .28); }
+    .ptt.transmitting::before { border-color: rgba(255,255,255,.65); }
+    .hint { min-height: 18px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 
-    .ptt.ready {
-      background: #354a30;
-      border-color: #668b56;
-      color: #e8f5df;
-    }
+    .bottom { justify-content: space-between; gap: 10px; margin-top: 17px; padding: 14px 2px 0; border-top: 1px solid var(--line); }
+    .peer-status { margin-top: 5px; font-size: 12px; font-weight: 800; }
+    .disconnect-btn { background: #fff4f4; color: var(--pink-700); }
+    .log { min-height: 16px; margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: #fff8f6; color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+    .footer { margin-top: 13px; text-align: center; color: #b49ca5; font-size: 10px; }
+    audio { display: none; }
 
-    .ptt.transmitting {
-      background: #813b35;
-      border-color: #d66b60;
-      color: white;
-      transform: scale(.97);
+    @media (max-width: 380px) {
+      body { padding: 14px 10px; }
+      .app { padding: 18px; border-radius: 25px; }
+      .brand { font-size: 20px; }
+      .status { padding: 7px 8px; font-size: 10px; }
+      .room-code { font-size: 31px; letter-spacing: 5px; }
+      .ptt { width: 150px; height: 150px; }
+      .section { padding: 14px; }
     }
-
-    .hint {
-      min-height: 18px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    .log {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    @media (max-width: 360px) {
-      .app { padding: 16px; }
-      .room-code { font-size: 29px; }
-      .ptt { width: 140px; height: 140px; }
-    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
   </style>
 </head>
-
 <body>
   <main class="app">
     <header class="top">
-      <div>
-        <div class="brand">MilRadio <span class="muted">/ PTT</span></div>
-        <div class="sub">Web Push-to-Talk</div>
+      <div class="brand-wrap">
+        <div class="brand-mark" aria-hidden="true">🎀</div>
+        <div>
+          <div class="brand">Pip<span>Voice</span></div>
+          <div class="sub tagline">little talks, instant connection</div>
+        </div>
       </div>
-      <div class="status">
+      <div class="status" aria-live="polite">
         <span class="dot" id="statusDot"></span>
         <span id="statusText">Starting...</span>
       </div>
     </header>
 
-    <section class="section">
-      <div class="label">Your room code</div>
+    <section class="section" aria-labelledby="roomLabel">
+      <div class="section-head">
+        <span class="mini-icon" aria-hidden="true">💌</span>
+        <div class="label" id="roomLabel">Your room code</div>
+      </div>
       <div class="room-row">
         <div>
           <div class="room-code" id="myCode">----</div>
-          <div class="sub">Share this code with your contact</div>
+          <div class="sub">Share this code with your person</div>
         </div>
-        <button class="small-btn" id="copyBtn" disabled>Copy</button>
+        <button class="small-btn" id="copyBtn" type="button" disabled>Copy code</button>
       </div>
     </section>
 
-    <section class="section">
-      <div class="label">Connect to a user</div>
+    <section class="section" aria-labelledby="connectLabel">
+      <div class="section-head">
+        <span class="mini-icon" aria-hidden="true">🫶</span>
+        <div class="label" id="connectLabel">Find your person</div>
+      </div>
       <div class="room-row">
-        <input id="targetCode" inputmode="numeric" maxlength="4"
-               placeholder="4-digit code" autocomplete="off">
-        <button class="connect-btn" id="connectBtn" disabled>Connect</button>
+        <input id="targetCode" inputmode="numeric" maxlength="4" placeholder="Enter 4-digit code" autocomplete="off" aria-label="Four-digit room code">
+        <button class="connect-btn" id="connectBtn" type="button" disabled>Connect</button>
       </div>
-      <div class="sub" style="margin-top:10px" id="connectionText">
-        Waiting for radio service...
-      </div>
+      <div class="sub section-note" id="connectionText" aria-live="polite">Getting PipVoice ready...</div>
     </section>
 
-    <section class="ptt-section">
-      <div class="label">Push to talk</div>
-      <button id="ptt" class="ptt" disabled>
-        <span id="pttText">OFFLINE</span>
+    <section class="ptt-section" aria-labelledby="pttHeading">
+      <div class="ptt-title" id="pttHeading">Your voice, on demand</div>
+      <div class="ptt-subtitle">Press and hold to say hello ✨</div>
+      <button id="ptt" class="ptt" type="button" disabled aria-label="Hold to talk">
+        <span class="ptt-inner">
+          <span class="mic-icon" aria-hidden="true">🎙️</span>
+          <span id="pttText">OFFLINE</span>
+        </span>
       </button>
-      <div class="hint" id="hint">Connect to another user first.</div>
+      <div class="hint" id="hint" aria-live="polite">Connect with someone first.</div>
     </section>
 
     <div class="bottom">
       <div>
-        <div class="label">Connection</div>
-        <div id="peerStatus" style="margin-top:5px;font-size:13px">
-          Not connected
-        </div>
+        <div class="label">Voice link</div>
+        <div class="peer-status" id="peerStatus">Not connected</div>
       </div>
-      <button id="disconnectBtn" disabled>Disconnect</button>
+      <button class="disconnect-btn" id="disconnectBtn" type="button" disabled>Disconnect</button>
     </div>
 
-    <div class="log" id="log">Initializing microphone and signaling...</div>
+    <div class="log" id="log" role="status" aria-live="polite">Preparing microphone and connection...</div>
+    <div class="footer">made for little moments ♡</div>
     <audio id="remoteAudio" autoplay playsinline></audio>
   </main>
 
 <script>
   const $ = id => document.getElementById(id);
-
   const myCode = String(Math.floor(1000 + Math.random() * 9000));
 
   let peer = null;
@@ -279,40 +274,31 @@
   let connected = false;
   let transmitting = false;
   let connecting = false;
-  let callGeneration = 0;
   let audioContext = null;
 
   const remoteAudio = $("remoteAudio");
+  const ptt = $("ptt");
 
   function status(text, type = "") {
     $("statusText").textContent = text;
     $("statusDot").className = "dot " + type;
   }
 
-  function log(text) {
-    $("log").textContent = text;
-  }
+  function log(text) { $("log").textContent = text; }
+  function setHint(text) { $("hint").textContent = text; }
 
-  function setHint(text) {
-    $("hint").textContent = text;
-  }
-
-  function playTone(frequency, duration, volume = 0.08) {
+  function playTone(frequency, duration, volume = 0.06) {
     try {
-      audioContext ||= new AudioContext();
-      if (audioContext.state === "suspended") {
-        audioContext.resume();
-      }
-
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      audioContext ||= new AudioContextClass();
+      if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
       const oscillator = audioContext.createOscillator();
       const gain = audioContext.createGain();
-
+      oscillator.type = "sine";
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(volume, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(
-        0.001, audioContext.currentTime + duration
-      );
-
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
       oscillator.connect(gain);
       gain.connect(audioContext.destination);
       oscillator.start();
@@ -324,33 +310,30 @@
 
   async function start() {
     $("myCode").textContent = myCode;
-    status("Requesting mic");
+    status("Allow mic");
 
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("Use HTTPS or localhost for microphone access.");
+        throw new Error("Microphone needs HTTPS or localhost. Open this site over HTTPS and reload.");
+      }
+      if (typeof Peer === "undefined") {
+        throw new Error("PipVoice could not load its connection library. Check your internet and reload.");
       }
 
       localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false
       });
-
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = false;
-      });
+      localStream.getAudioTracks().forEach(track => { track.enabled = false; });
 
       peer = new Peer(myCode);
 
       peer.on("open", () => {
-        status("Online", "online");
+        status("Ready", "online");
         $("connectBtn").disabled = false;
         $("copyBtn").disabled = false;
-        log("Radio service ready. Share your code to connect.");
+        $("connectionText").textContent = "Ready when you are — share your code to connect.";
+        log("PipVoice is ready. Share your 4-digit code with the other person.");
       });
 
       peer.on("call", call => {
@@ -358,195 +341,191 @@
           call.close();
           return;
         }
-
         if (!localStream) {
           call.close();
           return;
         }
-
-        acceptCall(call);
+        acceptCall(call, true);
       });
 
       peer.on("disconnected", () => {
-        status("Server offline", "error");
-        log("Signaling disconnected. Check your network.");
+        status("Reconnecting", "error");
+        log("Connection service disconnected. Check your internet connection.");
       });
 
       peer.on("error", error => {
         console.error(error);
-        status("Service error", "error");
-
         const messages = {
-          "unavailable-id": "Room code collision. Reload to get a new code.",
-          "peer-unavailable": "That code is offline or does not exist.",
-          "network": "Network error. Check your connection."
+          "unavailable-id": "This room code is already in use. Reload to get a new code.",
+          "peer-unavailable": "That code is offline or does not exist. Check the code and try again.",
+          "network": "Network error. Check your internet connection."
         };
-
-        log(messages[error.type] || ("PeerJS error: " + error.type));
-        connecting = false;
-        $("connectBtn").disabled = false;
+        status("Connection issue", "error");
+        log(messages[error.type] || ("Connection error: " + error.type));
+        if (!currentCall) {
+          connecting = false;
+          $("connectBtn").disabled = !peer?.open;
+        }
       });
-
     } catch (error) {
       console.error(error);
-      status("Setup failed", "error");
+      status("Setup needed", "error");
       log(error.message || "Microphone access failed.");
-      setHint("Allow microphone access and reload.");
+      setHint("Allow microphone access, then reload the page.");
+      $("connectionText").textContent = "PipVoice needs microphone permission to work.";
     }
   }
 
-  function acceptCall(call) {
+  // Incoming calls must be answered. Outgoing calls are already initiated with peer.call().
+  function acceptCall(call, incoming = false) {
     connecting = true;
     currentCall = call;
-    callGeneration++;
+    $("connectBtn").disabled = true;
+    status("Connecting");
+    $("connectionText").textContent = "Making a voice link...";
+    log(incoming ? "Incoming voice request. Connecting..." : "Calling that room... ");
 
     call.on("stream", stream => {
       if (currentCall !== call) return;
       remoteAudio.srcObject = stream;
       remoteAudio.play().catch(() => {
-        setHint("Tap the page once to enable incoming audio.");
+        setHint("Tap the page once to allow incoming audio.");
       });
       setConnected(call.peer);
     });
 
     call.on("close", () => {
-      if (currentCall === call) resetCall("Call ended.");
+      if (currentCall === call) resetCall("Voice link ended.");
     });
 
     call.on("error", error => {
       console.error(error);
-      if (currentCall === call) resetCall("Audio call failed.");
+      if (currentCall === call) resetCall("Audio connection failed. Please try again.");
     });
 
-    call.answer(localStream);
-    log("Incoming call. Establishing audio...");
+    if (incoming) call.answer(localStream);
   }
 
   function connectFrequency() {
     const target = $("targetCode").value.trim();
-
     if (!/^\d{4}$/.test(target)) {
-      log("Enter a valid 4-digit code.");
+      log("Please enter a valid 4-digit room code.");
+      $("targetCode").focus();
       return;
     }
-
     if (target === myCode) {
-      log("You cannot connect to your own code.");
+      log("That is your own code — enter someone else's code.");
       return;
     }
-
     if (!peer || peer.destroyed || !peer.open) {
-      log("Radio service is not ready.");
+      log("PipVoice is still getting ready. Try again in a moment.");
       return;
     }
-
     if (currentCall || connecting) {
-      log("Disconnect the current call first.");
+      log("Disconnect your current voice link before connecting to another person.");
       return;
     }
 
     connecting = true;
     $("connectBtn").disabled = true;
-    status("Connecting");
-    setHint("Waiting for the other user...");
-    log("Calling code " + target + "...");
+    status("Calling");
+    setHint("Waiting for the other person to connect...");
+    log("Calling room " + target + "...");
 
     try {
       const call = peer.call(target, localStream);
-      if (!call) throw new Error("Could not start the call.");
-      acceptCall(call);
+      if (!call) throw new Error("Could not start the voice call. Please try again.");
+      acceptCall(call, false);
     } catch (error) {
       console.error(error);
       connecting = false;
-      $("connectBtn").disabled = false;
-      status("Online", "online");
-      log(error.message);
+      $("connectBtn").disabled = !peer?.open;
+      status("Ready", "online");
+      log(error.message || "Could not start the call.");
     }
   }
 
   function setConnected(code) {
     connected = true;
     connecting = false;
-    status("In call", "online");
-    $("peerStatus").textContent = "Connected: " + code;
-    $("connectionText").textContent = "Audio link established";
-    $("ptt").disabled = false;
-    $("ptt").classList.add("ready");
-    $("pttText").innerHTML = "HOLD<br>TO TALK";
+    status("Connected", "online");
+    $("peerStatus").textContent = "Connected · " + code;
+    $("connectionText").textContent = "Your voice link is ready ♡";
+    ptt.disabled = false;
+    ptt.classList.add("ready");
+    $("pttText").textContent = "HOLD TO TALK";
+    ptt.setAttribute("aria-label", "Hold to talk");
     $("disconnectBtn").disabled = false;
     $("connectBtn").disabled = true;
-    setHint("Hold the button or Space to talk.");
-    log("Connected. Release PTT to mute your microphone.");
+    setHint("Hold the button or Space to talk. Release to mute.");
+    log("Connected! Your mic stays muted until you hold the talk button.");
   }
 
   function startTransmission(event) {
     if (!connected || !localStream || transmitting) return;
     if (event) event.preventDefault();
-
     transmitting = true;
-    localStream.getAudioTracks().forEach(track => {
-      track.enabled = true;
-    });
-
-    $("ptt").classList.add("transmitting");
-    $("pttText").textContent = "TRANSMITTING";
-    setHint("Mic is on. Release to stop.");
+    localStream.getAudioTracks().forEach(track => { track.enabled = true; });
+    ptt.classList.add("transmitting");
+    $("pttText").textContent = "SENDING VOICE";
+    setHint("You're live — release to mute.");
     playTone(140, 0.07);
   }
 
   function stopTransmission(event) {
     if (event) event.preventDefault();
     if (!transmitting) return;
-
     transmitting = false;
-    localStream?.getAudioTracks().forEach(track => {
-      track.enabled = false;
-    });
-
-    $("ptt").classList.remove("transmitting");
-    $("pttText").innerHTML = "HOLD<br>TO TALK";
+    localStream?.getAudioTracks().forEach(track => { track.enabled = false; });
+    ptt.classList.remove("transmitting");
+    $("pttText").textContent = connected ? "HOLD TO TALK" : "OFFLINE";
     if (connected) setHint("Mic muted. Hold to talk again.");
-    playTone(880, 0.1, 0.04);
+    playTone(880, 0.09, 0.035);
   }
 
   function resetCall(message = "Disconnected.") {
-    stopTransmission();
-
+    // Explicitly mute before clearing connection state.
+    if (transmitting) stopTransmission();
+    localStream?.getAudioTracks().forEach(track => { track.enabled = false; });
     connected = false;
     connecting = false;
     currentCall = null;
-    callGeneration++;
-
     remoteAudio.srcObject = null;
-    $("ptt").disabled = true;
-    $("ptt").classList.remove("ready", "transmitting");
+    ptt.disabled = true;
+    ptt.classList.remove("ready", "transmitting");
     $("pttText").textContent = "OFFLINE";
     $("peerStatus").textContent = "Not connected";
     $("connectionText").textContent = "Enter a code to connect";
     $("disconnectBtn").disabled = true;
     $("connectBtn").disabled = !peer?.open;
-
-    status(peer?.open ? "Online" : "Offline", peer?.open ? "online" : "error");
-    setHint("Connect to another user first.");
+    status(peer?.open ? "Ready" : "Offline", peer?.open ? "online" : "error");
+    setHint("Connect with someone first.");
     log(message);
   }
 
   function disconnect() {
     const call = currentCall;
-    resetCall("Call disconnected.");
+    resetCall("Voice link disconnected.");
     if (call) call.close();
   }
 
   $("connectBtn").addEventListener("click", connectFrequency);
+  $("targetCode").addEventListener("keydown", event => {
+    if (event.key === "Enter" && !$("connectBtn").disabled) connectFrequency();
+  });
   $("disconnectBtn").addEventListener("click", disconnect);
 
   $("copyBtn").addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(myCode);
-      $("copyBtn").textContent = "Copied";
-      setTimeout(() => $("copyBtn").textContent = "Copy", 1200);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(myCode);
+      } else {
+        throw new Error("Clipboard unavailable");
+      }
+      $("copyBtn").textContent = "Copied ♡";
+      setTimeout(() => { $("copyBtn").textContent = "Copy code"; }, 1400);
     } catch {
-      log("Copy unavailable. Your code is " + myCode);
+      log("Copy isn't available here. Your room code is " + myCode + ".");
     }
   });
 
@@ -554,26 +533,20 @@
     event.target.value = event.target.value.replace(/\D/g, "").slice(0, 4);
   });
 
-  const ptt = $("ptt");
-
   ptt.addEventListener("pointerdown", event => {
     if (ptt.disabled) return;
-    ptt.setPointerCapture(event.pointerId);
+    try { ptt.setPointerCapture(event.pointerId); } catch (_) {}
     startTransmission(event);
   });
-
   ptt.addEventListener("pointerup", stopTransmission);
   ptt.addEventListener("pointercancel", stopTransmission);
   ptt.addEventListener("lostpointercapture", stopTransmission);
   window.addEventListener("blur", stopTransmission);
 
   document.addEventListener("keydown", event => {
-    if (event.code !== "Space" ||
-        event.repeat ||
-        event.target.matches("input, textarea, button")) return;
+    if (event.code !== "Space" || event.repeat || event.target.matches("input, textarea, button, select")) return;
     startTransmission(event);
   });
-
   document.addEventListener("keyup", event => {
     if (event.code === "Space") stopTransmission(event);
   });
@@ -582,6 +555,7 @@
     localStream?.getTracks().forEach(track => track.stop());
     currentCall?.close();
     peer?.destroy();
+    if (audioContext && audioContext.state !== "closed") audioContext.close().catch(() => {});
   });
 
   start();
