@@ -1,0 +1,590 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MilRadio | Web PTT</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #151815;
+      --panel: #202520;
+      --border: #343b34;
+      --text: #edf1eb;
+      --muted: #9ba69a;
+      --green: #9bd477;
+      --red: #ee7777;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 16px;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, sans-serif;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 390px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--panel);
+    }
+
+    .top, .status-row, .room-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .top { margin-bottom: 24px; }
+
+    .brand {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .sub, .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #777;
+    }
+
+    .dot.online { background: var(--green); }
+    .dot.error { background: var(--red); }
+
+    .section {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .room-code {
+      margin: 12px 0 6px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 7px;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px 13px;
+      background: #303830;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .small-btn { padding: 9px 11px; }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      color: var(--text);
+      background: #171b17;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--green); }
+
+    .room-row { margin-top: 12px; }
+    .room-row input { flex: 1; }
+
+    .connect-btn {
+      background: var(--green);
+      color: #182016;
+      border-color: var(--green);
+    }
+
+    .ptt-section {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .ptt {
+      width: 154px;
+      height: 154px;
+      margin: 20px auto 14px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 5px solid #384138;
+      background: #293129;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .ptt.ready {
+      background: #354a30;
+      border-color: #668b56;
+      color: #e8f5df;
+    }
+
+    .ptt.transmitting {
+      background: #813b35;
+      border-color: #d66b60;
+      color: white;
+      transform: scale(.97);
+    }
+
+    .hint {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .log {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 360px) {
+      .app { padding: 16px; }
+      .room-code { font-size: 29px; }
+      .ptt { width: 140px; height: 140px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <div class="brand">MilRadio <span class="muted">/ PTT</span></div>
+        <div class="sub">Web Push-to-Talk</div>
+      </div>
+      <div class="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Starting...</span>
+      </div>
+    </header>
+
+    <section class="section">
+      <div class="label">Your room code</div>
+      <div class="room-row">
+        <div>
+          <div class="room-code" id="myCode">----</div>
+          <div class="sub">Share this code with your contact</div>
+        </div>
+        <button class="small-btn" id="copyBtn" disabled>Copy</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">Connect to a user</div>
+      <div class="room-row">
+        <input id="targetCode" inputmode="numeric" maxlength="4"
+               placeholder="4-digit code" autocomplete="off">
+        <button class="connect-btn" id="connectBtn" disabled>Connect</button>
+      </div>
+      <div class="sub" style="margin-top:10px" id="connectionText">
+        Waiting for radio service...
+      </div>
+    </section>
+
+    <section class="ptt-section">
+      <div class="label">Push to talk</div>
+      <button id="ptt" class="ptt" disabled>
+        <span id="pttText">OFFLINE</span>
+      </button>
+      <div class="hint" id="hint">Connect to another user first.</div>
+    </section>
+
+    <div class="bottom">
+      <div>
+        <div class="label">Connection</div>
+        <div id="peerStatus" style="margin-top:5px;font-size:13px">
+          Not connected
+        </div>
+      </div>
+      <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+
+    <div class="log" id="log">Initializing microphone and signaling...</div>
+    <audio id="remoteAudio" autoplay playsinline></audio>
+  </main>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  const myCode = String(Math.floor(1000 + Math.random() * 9000));
+
+  let peer = null;
+  let localStream = null;
+  let currentCall = null;
+  let connected = false;
+  let transmitting = false;
+  let connecting = false;
+  let callGeneration = 0;
+  let audioContext = null;
+
+  const remoteAudio = $("remoteAudio");
+
+  function status(text, type = "") {
+    $("statusText").textContent = text;
+    $("statusDot").className = "dot " + type;
+  }
+
+  function log(text) {
+    $("log").textContent = text;
+  }
+
+  function setHint(text) {
+    $("hint").textContent = text;
+  }
+
+  function playTone(frequency, duration, volume = 0.08) {
+    try {
+      audioContext ||= new AudioContext();
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(volume, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001, audioContext.currentTime + duration
+      );
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
+    } catch (error) {
+      console.warn("Audio tone unavailable", error);
+    }
+  }
+
+  async function start() {
+    $("myCode").textContent = myCode;
+    status("Requesting mic");
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Use HTTPS or localhost for microphone access.");
+      }
+
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: false
+      });
+
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = false;
+      });
+
+      peer = new Peer(myCode);
+
+      peer.on("open", () => {
+        status("Online", "online");
+        $("connectBtn").disabled = false;
+        $("copyBtn").disabled = false;
+        log("Radio service ready. Share your code to connect.");
+      });
+
+      peer.on("call", call => {
+        if (currentCall || connecting) {
+          call.close();
+          return;
+        }
+
+        if (!localStream) {
+          call.close();
+          return;
+        }
+
+        acceptCall(call);
+      });
+
+      peer.on("disconnected", () => {
+        status("Server offline", "error");
+        log("Signaling disconnected. Check your network.");
+      });
+
+      peer.on("error", error => {
+        console.error(error);
+        status("Service error", "error");
+
+        const messages = {
+          "unavailable-id": "Room code collision. Reload to get a new code.",
+          "peer-unavailable": "That code is offline or does not exist.",
+          "network": "Network error. Check your connection."
+        };
+
+        log(messages[error.type] || ("PeerJS error: " + error.type));
+        connecting = false;
+        $("connectBtn").disabled = false;
+      });
+
+    } catch (error) {
+      console.error(error);
+      status("Setup failed", "error");
+      log(error.message || "Microphone access failed.");
+      setHint("Allow microphone access and reload.");
+    }
+  }
+
+  function acceptCall(call) {
+    connecting = true;
+    currentCall = call;
+    callGeneration++;
+
+    call.on("stream", stream => {
+      if (currentCall !== call) return;
+      remoteAudio.srcObject = stream;
+      remoteAudio.play().catch(() => {
+        setHint("Tap the page once to enable incoming audio.");
+      });
+      setConnected(call.peer);
+    });
+
+    call.on("close", () => {
+      if (currentCall === call) resetCall("Call ended.");
+    });
+
+    call.on("error", error => {
+      console.error(error);
+      if (currentCall === call) resetCall("Audio call failed.");
+    });
+
+    call.answer(localStream);
+    log("Incoming call. Establishing audio...");
+  }
+
+  function connectFrequency() {
+    const target = $("targetCode").value.trim();
+
+    if (!/^\d{4}$/.test(target)) {
+      log("Enter a valid 4-digit code.");
+      return;
+    }
+
+    if (target === myCode) {
+      log("You cannot connect to your own code.");
+      return;
+    }
+
+    if (!peer || peer.destroyed || !peer.open) {
+      log("Radio service is not ready.");
+      return;
+    }
+
+    if (currentCall || connecting) {
+      log("Disconnect the current call first.");
+      return;
+    }
+
+    connecting = true;
+    $("connectBtn").disabled = true;
+    status("Connecting");
+    setHint("Waiting for the other user...");
+    log("Calling code " + target + "...");
+
+    try {
+      const call = peer.call(target, localStream);
+      if (!call) throw new Error("Could not start the call.");
+      acceptCall(call);
+    } catch (error) {
+      console.error(error);
+      connecting = false;
+      $("connectBtn").disabled = false;
+      status("Online", "online");
+      log(error.message);
+    }
+  }
+
+  function setConnected(code) {
+    connected = true;
+    connecting = false;
+    status("In call", "online");
+    $("peerStatus").textContent = "Connected: " + code;
+    $("connectionText").textContent = "Audio link established";
+    $("ptt").disabled = false;
+    $("ptt").classList.add("ready");
+    $("pttText").innerHTML = "HOLD<br>TO TALK";
+    $("disconnectBtn").disabled = false;
+    $("connectBtn").disabled = true;
+    setHint("Hold the button or Space to talk.");
+    log("Connected. Release PTT to mute your microphone.");
+  }
+
+  function startTransmission(event) {
+    if (!connected || !localStream || transmitting) return;
+    if (event) event.preventDefault();
+
+    transmitting = true;
+    localStream.getAudioTracks().forEach(track => {
+      track.enabled = true;
+    });
+
+    $("ptt").classList.add("transmitting");
+    $("pttText").textContent = "TRANSMITTING";
+    setHint("Mic is on. Release to stop.");
+    playTone(140, 0.07);
+  }
+
+  function stopTransmission(event) {
+    if (event) event.preventDefault();
+    if (!transmitting) return;
+
+    transmitting = false;
+    localStream?.getAudioTracks().forEach(track => {
+      track.enabled = false;
+    });
+
+    $("ptt").classList.remove("transmitting");
+    $("pttText").innerHTML = "HOLD<br>TO TALK";
+    if (connected) setHint("Mic muted. Hold to talk again.");
+    playTone(880, 0.1, 0.04);
+  }
+
+  function resetCall(message = "Disconnected.") {
+    stopTransmission();
+
+    connected = false;
+    connecting = false;
+    currentCall = null;
+    callGeneration++;
+
+    remoteAudio.srcObject = null;
+    $("ptt").disabled = true;
+    $("ptt").classList.remove("ready", "transmitting");
+    $("pttText").textContent = "OFFLINE";
+    $("peerStatus").textContent = "Not connected";
+    $("connectionText").textContent = "Enter a code to connect";
+    $("disconnectBtn").disabled = true;
+    $("connectBtn").disabled = !peer?.open;
+
+    status(peer?.open ? "Online" : "Offline", peer?.open ? "online" : "error");
+    setHint("Connect to another user first.");
+    log(message);
+  }
+
+  function disconnect() {
+    const call = currentCall;
+    resetCall("Call disconnected.");
+    if (call) call.close();
+  }
+
+  $("connectBtn").addEventListener("click", connectFrequency);
+  $("disconnectBtn").addEventListener("click", disconnect);
+
+  $("copyBtn").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(myCode);
+      $("copyBtn").textContent = "Copied";
+      setTimeout(() => $("copyBtn").textContent = "Copy", 1200);
+    } catch {
+      log("Copy unavailable. Your code is " + myCode);
+    }
+  });
+
+  $("targetCode").addEventListener("input", event => {
+    event.target.value = event.target.value.replace(/\D/g, "").slice(0, 4);
+  });
+
+  const ptt = $("ptt");
+
+  ptt.addEventListener("pointerdown", event => {
+    if (ptt.disabled) return;
+    ptt.setPointerCapture(event.pointerId);
+    startTransmission(event);
+  });
+
+  ptt.addEventListener("pointerup", stopTransmission);
+  ptt.addEventListener("pointercancel", stopTransmission);
+  ptt.addEventListener("lostpointercapture", stopTransmission);
+  window.addEventListener("blur", stopTransmission);
+
+  document.addEventListener("keydown", event => {
+    if (event.code !== "Space" ||
+        event.repeat ||
+        event.target.matches("input, textarea, button")) return;
+    startTransmission(event);
+  });
+
+  document.addEventListener("keyup", event => {
+    if (event.code === "Space") stopTransmission(event);
+  });
+
+  window.addEventListener("beforeunload", () => {
+    localStream?.getTracks().forEach(track => track.stop());
+    currentCall?.close();
+    peer?.destroy();
+  });
+
+  start();
+</script>
+</body>
+</html>
