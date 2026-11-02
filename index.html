@@ -266,7 +266,18 @@
 
 <script>
   const $ = id => document.getElementById(id);
-  const myCode = String(Math.floor(1000 + Math.random() * 9000));
+  function getRoomCode() {
+    let code = localStorage.getItem("pipvoice_room_code");
+
+    if (!code) {
+        code = String(Math.floor(1000 + Math.random() * 9000));
+        localStorage.setItem("pipvoice_room_code", code);
+    }
+
+    return code;
+}
+
+const myCode = getRoomCode();
 
   let peer = null;
   let localStream = null;
